@@ -3,7 +3,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from app.core.redis import redis_client
 from app.core.config import settings
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                         content={"detail": "Too Many Requests - Rate limit exceeded"}
                     )
             except Exception as e:
-                logger.error(f"RATE LIMIT BYPASS: Redis inactivo ({e})")
+                logger.error(f"RATE LIMIT BYPASS: Redis inactivo. Ignorando límite. ({e})")
         
-        if os.getenv("TESTING") == "True":
-            return await call_next(request)
+        return await call_next(request)
