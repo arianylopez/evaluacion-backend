@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api import menu_router, table_router, reservation_router
+from app.core.rate_limit import RateLimitMiddleware
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -25,3 +26,4 @@ async def health_check():
 app.include_router(menu_router.router, prefix=f"{settings.API_V1_STR}/menu", tags=["Menu"])
 app.include_router(table_router.router, prefix=f"{settings.API_V1_STR}/tables", tags=["Tables"])
 app.include_router(reservation_router.router, prefix=f"{settings.API_V1_STR}/reservations", tags=["Reservations"])
+app.add_middleware(RateLimitMiddleware)

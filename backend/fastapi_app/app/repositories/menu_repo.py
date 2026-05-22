@@ -4,6 +4,7 @@ import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import redis.asyncio as redis
+import os
 
 from app.schemas.models import MenuItem
 from app.schemas.schemas import MenuItemResponse
@@ -19,14 +20,15 @@ class MenuRepository:
     async def get_menu_by_date(self, target_date: datetime.date):
         cache_key = f"menu:{target_date.isoformat()}"
 
-        try:
-            cached_data = await self.cache.get(cache_key)
-            if cached_data:
-                logger.info(f"CACHE HIT: Menú cargado desde Redis para {target_date}")
-                items_dict = json.loads(cached_data)
-                return [MenuItemResponse(**item) for item in items_dict]
-        except Exception as e:
-            logger.warning(f"CACHE ERROR: Redis falló o está inactivo ({e})")
+        if os.getenv("TESTING") != "True":
+            try:
+                cached_data = await self.cache.get(cache_key)
+                if cached_data:
+                    logger.info(f"CACHE HIT: Menú cargado desde Redis para {target_date}")
+                    items_dict = json.loads(cached_data)
+                    return [MenuItemResponse(**item) for item in items_dict]
+            except Exception as e:
+                logger.warning(f"CACHE ERROR: Redis falló o está inactivo ({e})")
 
         logger.info(f"DB QUERY: Consultando el menú en PostgreSQL para {target_date}")
         query = select(MenuItem).where(MenuItem.date == target_date)
