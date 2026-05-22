@@ -94,3 +94,17 @@ class ReservationGuest(UUIDMixin, TimeStampedMixin):
 
     def __str__(self):
         return self.name
+    
+class Turn(UUIDMixin, TimeStampedMixin):
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='turns')
+    name = models.CharField(max_length=50, help_text="Ej: Almuerzo, Cena")
+    start_time = models.TimeField(help_text="Hora de inicio del turno")
+    end_time = models.TimeField(help_text="Hora de fin del turno")
+
+    class Meta:
+        db_table = '"content"."turn"'
+        verbose_name = "Turn"
+        verbose_name_plural = "Turns"
+
+    def __str__(self):
+        return f"{self.name} ({self.start_time} - {self.end_time}) - {self.restaurant.name}"

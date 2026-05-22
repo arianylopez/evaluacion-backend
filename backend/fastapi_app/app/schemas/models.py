@@ -56,3 +56,13 @@ class Reservation(Base):
     time = Column(Time)
     party_size = Column(Integer)
     status = Column(String(20))
+
+class Turn(Base):
+    __tablename__ = 'turn'
+    __table_args__ = {'schema': 'content'}
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    restaurant_id = Column(UUID(as_uuid=True), ForeignKey('content.restaurant.id'))
+    name = Column(String)
+    start_time = Column(Time)
+    end_time = Column(Time)

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Restaurant, TableType, MenuItem, Reservation, ReservationGuest
+from .models import Restaurant, TableType, MenuItem, Reservation, ReservationGuest, Turn
 
 class TableTypeInline(admin.TabularInline):
     model = TableType
@@ -43,3 +43,9 @@ class ReservationAdmin(admin.ModelAdmin):
     search_fields = ('restaurant__name',)
     date_hierarchy = 'date'
     inlines = [ReservationGuestInline]
+
+@admin.register(Turn)
+class TurnAdmin(admin.ModelAdmin):
+    list_display = ('restaurant', 'name', 'start_time', 'end_time')
+    list_filter = ('restaurant', 'name', 'start_time', 'end_time')
+    search_fields = ('name')

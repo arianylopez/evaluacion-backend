@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from uuid import UUID
-import datetime
+import time
 
 class TableTypeResponse(BaseModel):
     id: UUID
@@ -30,3 +30,12 @@ class AvailabilityResponse(BaseModel):
     price_per_seat: float   
 
     model_config = ConfigDict(from_attributes=True)
+
+class TurnAvailabilityResponse(BaseModel):
+    name: str
+    start_time: time
+    end_time: time
+    total_capacity: int
+    confirmed_reservations: int
+    occupancy_percentage: float
+    is_closed: bool
