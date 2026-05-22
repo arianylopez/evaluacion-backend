@@ -11,9 +11,11 @@ docker compose up --build -d
 (La base de datos, las migraciones, la creación del superusuario y el seeding de los registros se ejecutarán de forma completamente automática en el primer arranque)
 
 ## Decisiones de Diseño y Trade-offs
-- **Arquitectura**: Se implementó una separación de preocupaciones entre el Django Admin (gestión de escritura) y FastAPI (lectura de alto rendimiento). Ambos comparten la base de datos PostgreSQL pero operan de forma independiente
+- **Arquitectura**: Se implementó una separación de preocupaciones. El Django Admin (servido vía Gunicorn) gestiona exclusivamente la escritura y configuración administrativa. FastAPI (servido vía Uvicorn) gestiona el alto volumen de tráfico de lectura pública. Ambos comparten la base de datos PostgreSQL en el esquema content, pero operan de forma independiente aplicando el principio de Inversión de Dependencias y Patrones de Repositorio/Servicio
 - **Caché y Degradación:** Se utiliza Redis para cachear respuestas de lista y detalle. Estrategia: Cache-Aside. Si Redis no es alcanzable, el sistema captura la excepción y redirige la consulta directamente a PostgreSQL para garantizar la disponibilidad
-- **Timezone**: El manejo de tiempo es timezone-aware mediante la librería zoneinfo. La disponibilidad calcula el offset dinámico enviado por el cliente
+- **Timezone**: El manejo de tiempo es timezone-aware mediante la librería zoneinfo, la disponibilidad calcula el offset dinámico enviado por el cliente
+- **Búsqueda Textual**: Se utilizó el operador nativo ILIKE de PostgreSQL en lugar de herramientas externas (como Elasticsearch) para mantener la infraestructura simple y cumplir con los requerimientos técnicos
+- **Paginación**: Estandarizada mediante parámetros limit y offset inyectados desde el router hasta la base de datos para optimizar la transferencia de memoria
 
 
 ## Como probar el sistema
@@ -28,7 +30,13 @@ docker-compose exec fastapi pytest -v
 
 **Documentación OpenAPI (Swagger):** http://localhost/api/v1/openapi.json y http://localhost/docs
 
-**Healthcheck**: http://localhost/api/v1/healthz (Retorna 200/503 según estado)
+**Healthcheck**: http://localhost/api/v1/healthz y http://localhost/healthz/ (Retorna 200/503 según estado)
+
+**Prueba de 404**: http://localhost/rutainvalida
+
+## Manejo de Condiciones de Carrera
+- Lógica de Negocio (Inventory / Capacity Enforcement): Si el cálculo de disponibilidad se implementa de manera ingenua (ej. obteniendo el número en memoria y restando), múltiples lecturas simultáneas podrían permitir la sobreventa de mesas (Overbooking)
+- Solución aplicada: El sistema delega la verdad a la base de datos, se calcula la ocupación sumando dinámicamente el tamaño de los grupos (party_size) de todas las reservas con estado CONFIRMED usando una función de agregación (GROUP BY y SUM) en PostgreSQL al momento exacto de la petición
 
 ## Submission Reflection 
 _La decisión por la que me siento mas orgullosa_:
