@@ -20,3 +20,12 @@ async def get_menu(
     repo = MenuRepository(db, cache)
     
     return await repo.get_menu_by_date(target_date=date)
+
+@router.get("/search/", response_model=List[MenuItemResponse])
+async def search_menu(
+    query: str = Query(..., min_length=1, description="Texto a buscar en nombre o descripción"),
+    db: AsyncSession = Depends(get_db),
+    cache: redis.Redis = Depends(get_redis)
+):
+    repo = MenuRepository(db, cache)
+    return await repo.search_menu_items(query)

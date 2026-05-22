@@ -7,7 +7,7 @@ class TableRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_table_types(self):
+    async def get_table_types(self, skip: int = 0, limit: int = 10):
         rest_query = select(Restaurant).limit(1)
         rest_result = await self.db.execute(rest_query)
         restaurant = rest_result.scalar_one_or_none()
@@ -15,7 +15,13 @@ class TableRepository:
         if not restaurant:
             return []
 
-        query = select(TableType).where(TableType.restaurant_id == restaurant.id)
+        query = (
+            select(TableType)
+            .where(TableType.restaurant_id == restaurant.id)
+            .offset(skip)
+            .limit(limit)
+        )
+        
         result = await self.db.execute(query)
         table_types = result.scalars().all()
 

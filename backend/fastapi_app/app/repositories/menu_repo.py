@@ -2,7 +2,7 @@ import json
 import logging
 import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 import redis.asyncio as redis
 import os
 
@@ -46,3 +46,18 @@ class MenuRepository:
             logger.warning(f"CACHE WRITE ERROR: No se pudo guardar ({e})")
 
         return response_data
+    
+    async def search_menu_items(self, query: str):
+        logger.info(f"DB SEARCH: Buscando platillos que contengan '{query}'")
+        
+        search_stmt = select(MenuItem).where(
+            or_(
+                MenuItem.name.ilike(f"%{query}%"),
+                MenuItem.description.ilike(f"%{query}%")
+            )
+        )
+        
+        result = await self.db.execute(search_stmt)
+        items = result.scalars().all()
+        
+        return [MenuItemResponse.model_validate(item) for item in items]
