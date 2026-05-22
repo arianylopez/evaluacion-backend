@@ -16,6 +16,15 @@ class Command(BaseCommand):
         TABLE_TYPES = ["Barra", "Mesa Compartida", "Terraza", "Salón Principal", "VIP", "Jardín"]
         STATUSES = ['CONFIRMED', 'CANCELLED', 'COMPLETED']
 
+        FOOD_BASES = [
+            "Ceviche Clásico", "Tacos al Pastor", "Lasaña Boloñesa", "Risotto de Hongos",
+            "Filete Mignon", "Ensalada César", "Sopa de Cebolla", "Tiramisú",
+            "Cheesecake", "Volcán de Chocolate", "Pizza Margarita", "Hamburguesa Trufada",
+            "Pollo al Curry", "Costillas BBQ", "Salmón a la Parrilla", "Pasta Carbonara",
+            "Tartar de Atún", "Paella Mixta", "Bruschetta de Tomate", "Carpaccio de Res"
+        ]
+        FOOD_ADJECTIVES = ["de la Casa", "Especial", "Premium", "Rústico", "al Carbón", "Gourmet", "Picante"]
+
         if Restaurant.objects.exists():
             self.stdout.write(self.style.WARNING('La base de datos ya contiene datos. Omitiendo seeding para evitar duplicidad masiva.'))
             return
@@ -39,8 +48,6 @@ class Command(BaseCommand):
         table_types_to_create = []
         menu_items_to_create = []
         reservations_to_create = []
-        
-        now = timezone.now()
 
         for restaurant in inserted_restaurants:
             for _ in range(10):
@@ -48,17 +55,18 @@ class Command(BaseCommand):
                     restaurant=restaurant,
                     name=random.choice(TABLE_TYPES),
                     seats=random.randint(1, 8),
-                    description=fake.sentence(),
+                    description=fake.sentence(nb_words=6),
                     price_per_seat=round(random.uniform(0, 50.0), 2)
                 ))
             
             for _ in range(40):
+                dish_name = f"{random.choice(FOOD_BASES)} {random.choice(FOOD_ADJECTIVES)}".strip()
                 menu_items_to_create.append(MenuItem(
                     restaurant=restaurant,
                     date=fake.date_between(start_date='-10d', end_date='+30d'),
                     course=random.choice(COURSES),
-                    name=fake.catch_phrase().title(), 
-                    description=fake.text(max_nb_chars=100),
+                    name=dish_name,
+                    description=fake.sentence(nb_words=8), 
                     price=round(random.uniform(5.0, 100.0), 2),
                     allergens=[fake.word(), fake.word()] if random.choice([True, False]) else []
                 ))
@@ -76,8 +84,7 @@ class Command(BaseCommand):
         TableType.objects.bulk_create(table_types_to_create, batch_size=5000)
         MenuItem.objects.bulk_create(menu_items_to_create, batch_size=5000)
         
-        self.stdout.write(self.style.NOTICE('Asociando y guardando Reservaciones... (Esto tomará unos segundos)'))
-        
+        self.stdout.write(self.style.NOTICE('Asociando y guardando Reservaciones...'))
         all_tables = TableType.objects.all().values('id', 'restaurant_id')
         tables_by_restaurant = {}
         for t in all_tables:
