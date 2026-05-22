@@ -44,3 +44,15 @@ Me siento orgullosa por la implementación de la capa de caché de Redis, la org
 
 _La decisión que menos me satisface_:
 Hay algunos enfoques de reserva en cuanto a la logica de negocio implementada en la API, el frontend llama a endpoints como /menu/ sin especificar un restaurant_id, dado que se daba un Restaurante como entidad diseñé el backend para que se capture el primer restaurante disponible, hubo una gran confusión de mi parte en cuanto al documento por lo que no me siento orgullosa de muchas decisiones que tome al realizar el modelado de la base de datos
+
+## DEFENSA - C3. Endpoint de cupos por turno con timezone
+_QUE_ hice? El problema como tal pedia que se devolvieran todos los turnos del dia clasificados por almuerzo (12:00-15:00) y cena (19:00-23:00) entonces lo que hice fue agregar una nueva tabla llamada Turnos encontrada en **django_admin/reservations/models** 
+_COMO_ lo hice? Lo primero que hice fue crear una nueva tabla llamada Turn, luego pase a agregarla al admin de django para que se pudieran editar los atributos correspondientes, luego pasando a crear el endpoint cree los siguientes archivos:
+- **fastapi_app/app/services/turn_service** // Aqui se realiza la logica de las metricas que se piden dentro del problema, entra la logica como tal donde se calcula el porcentaje, la capacidad y las reservas confirmadas
+- **fastapi_app/app/schemas/models y schemas** // En models agregue las representaciones de la tabla para obtener sus atributos llamando a la tabla de la BDD, en schemas implemente la salida de respuesta del endpoint el JSON que va a obtener
+-  **fastapi_app/app/repositories/turn_repo** // Aqui obtenemos los turnos, la capacidad y si esta ocupado 
+- **fastapi_app/app/core/protocols** // Modifique como tal este archivo ya que lo ocupa la capa de Servicios, agregando la interfaz donde se dictan las funciones 
+- **fastapi_app/app/api/restaurant_router** // La creacion del endpoint donde llamamos a la capa de Repositorios y la capa de Servicios que va a contener que datos se van a solicitar del endpoint y que datos va a devolver como respuesta 
+_POR QUE_ lo hice? Intenté concatenar las tablas previamente creadas y luego hacer una logica para formar la respuesta del endpoint pero realmente no habian atributos en esas tablas para centralizar la informacion como ser la capacidad, reservas, me parecio lo mas conveniente tener todo de manera centralizada y ordenada para que la respuesta sea mejor estructurada ya que tambien pedia un porcentaje de ocupacion asi como tambien una señal de que si esta cerrado o no
+_QUE me falto_? Diria que me falto desde un principio encontrar la logica del problema, mayor razonamiento desde un principio ya que no entendia muy bien el problema entonces perdi tiempo tratando de encontrar la logica ya que me sentia confundida
+_COMO lo hubiese hecho_? Mas que todo reducir tiempo, y desde un principio haber tenido un mejor diseño de base de datos al momento de creacion del proyecto que guarde los turnos correspondientes de esta manera iba a ser mas facil la creacion del endpoint ya que solo iba a ser tocar el servicio de fastAPI,  
