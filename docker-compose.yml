@@ -54,6 +54,11 @@ services:
              gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2"
     volumes:
       - django_static:/app/staticfiles
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - mesa_network
 
